@@ -12,6 +12,7 @@ const opportunityRoutes = require('./routes/opportunities');
 const announcementRoutes = require('./routes/announcements');
 const donationRoutes = require('./routes/donations');
 const analyticsRoutes = require('./routes/analytics');
+const pendingRequestRoutes = require('./routes/pendingRequests');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/pending-requests', pendingRequestRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -76,6 +76,45 @@ router.get('/', [
   }
 });
 
+// Get user's registered events (must be before /:id routes)
+router.get('/user/registered', auth, async (req, res) => {
+  try {
+    const events = await Event.find({
+      $or: [
+        { rsvpAlumniIds: req.user._id },
+        { waitlistIds: req.user._id }
+      ],
+      status: 'published'
+    })
+    .populate('createdBy', 'name email')
+    .sort({ startDate: 1 });
+
+    // Separate registered events from waitlisted events
+    const registeredEvents = events.filter(event => 
+      event.rsvpAlumniIds.some(id => id.toString() === req.user._id.toString())
+    );
+    
+    const waitlistedEvents = events.filter(event => 
+      event.waitlistIds.some(id => id.toString() === req.user._id.toString()) &&
+      !event.rsvpAlumniIds.some(id => id.toString() === req.user._id.toString())
+    );
+
+    res.json({
+      success: true,
+      data: {
+        registered: registeredEvents,
+        waitlisted: waitlistedEvents
+      }
+    });
+  } catch (error) {
+    console.error('Get user events error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch user events' 
+    });
+  }
+});
+
 // Get single event
 router.get('/:id', async (req, res) => {
   try {
@@ -322,6 +361,7 @@ router.delete('/:id/rsvp', auth, async (req, res) => {
     });
   }
 });
+
 
 // Delete event (Admin only)
 router.delete('/:id', auth, adminAuth, async (req, res) => {

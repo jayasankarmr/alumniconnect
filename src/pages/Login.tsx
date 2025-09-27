@@ -4,12 +4,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '../lib/contexts/AuthContext';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 
 const loginSchema = z.object({
+  userType: z.enum(['alumni', 'student'], {
+    required_error: 'Please select your user type',
+  }),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
@@ -35,7 +38,8 @@ const Login = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data.email, data.password);
-      toast.success('Welcome back!');
+      const welcomeMessage = data.userType === 'alumni' ? 'Welcome back, Alumni!' : 'Welcome back, Student!';
+      toast.success(welcomeMessage);
       navigate(from, { replace: true });
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Login failed');
@@ -58,6 +62,31 @@ const Login = () => {
         <Card>
           <Card.Content className="p-8">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <select
+                    {...register('userType')}
+                    id="userType"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white"
+                  >
+                    <option value="">Select your status</option>
+                    <option value="alumni">Alumni (Graduated)</option>
+                    <option value="student">Current Student</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                {errors.userType && (
+                  <p className="mt-2 text-sm text-red-600">{errors.userType.message}</p>
+                )}
+              </div>
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email address
@@ -159,8 +188,14 @@ const Login = () => {
                 <strong>Admin:</strong> admin@university.edu / admin123
               </div>
               <div>
-                <strong>Alumni:</strong> alumni1@university.edu / password123
+                <strong>Alumni:</strong> alumni.test@university.edu / alumni123
               </div>
+              <div>
+                <strong>Student:</strong> user1@university.edu / user123
+              </div>
+            </div>
+            <div className="mt-3 text-xs text-blue-600">
+              💡 Select "Alumni" or "Student" from the dropdown above, then use the corresponding credentials
             </div>
           </Card.Content>
         </Card>

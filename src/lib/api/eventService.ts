@@ -51,4 +51,9 @@ export const eventService = {
     const response = await apiClient.delete(`/events/${id}/rsvp`);
     return response.data;
   },
+
+  async getUserEvents() {
+    const response = await apiClient.get('/events/user/registered');
+    return response.data;
+  },
 };

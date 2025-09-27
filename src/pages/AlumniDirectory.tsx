@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../lib/contexts/AuthContext';
 import { 
   Search, 
   Filter, 
@@ -27,6 +28,7 @@ interface AlumniFilters {
 }
 
 const AlumniDirectory = () => {
+  const { user, loading: authLoading } = useAuth();
   const [filters, setFilters] = useState<AlumniFilters>({
     search: '',
     graduationYear: '',
@@ -47,7 +49,50 @@ const AlumniDirectory = () => {
       isMentor: filters.isMentor === 'true' ? true : filters.isMentor === 'false' ? false : undefined,
     }),
     keepPreviousData: true,
+    enabled: !!user, // Only fetch data if user is authenticated
   });
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-blue-500 text-6xl mb-4">⏳</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h2>
+          <p className="text-gray-600">Please wait while we verify your authentication</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if user is not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="text-gray-400 text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h2>
+          <p className="text-gray-600 mb-6">
+            You need to be signed in to view the alumni directory. Please log in to access this content.
+          </p>
+          <div className="space-y-3">
+            <a
+              href="/login"
+              className="w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium block"
+            >
+              Sign In
+            </a>
+            <a
+              href="/register"
+              className="w-full bg-green-600 text-white text-center py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium block"
+            >
+              Create Account
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleFilterChange = (key: keyof AlumniFilters, value: string) => {
     setFilters(prev => ({
@@ -242,84 +287,87 @@ const AlumniDirectory = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {data?.data?.map((alumni: any) => (
                 <Card key={alumni._id} hover className="h-full">
-                  <Card.Content className="p-6">
-                    <div className="flex items-start space-x-4 mb-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                          {alumni.profilePicture ? (
-                            <img
-                              src={alumni.profilePicture}
-                              alt={alumni.name}
-                              className="w-16 h-16 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-white text-xl font-bold">
-                              {alumni.name.charAt(0)}
-                            </span>
+                  <Card.Content className="p-6 flex flex-col h-full">
+                    <div className="flex-1">
+                      <div className="flex items-start space-x-4 mb-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                            {alumni.profilePicture ? (
+                              <img
+                                src={alumni.profilePicture}
+                                alt={alumni.name}
+                                className="w-16 h-16 rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-white text-xl font-bold">
+                                {alumni.name.charAt(0)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-gray-900 truncate mb-1">
+                            {alumni.name}
+                          </h3>
+                          {alumni.title && (
+                            <p className="text-gray-600 text-sm truncate mb-1">
+                              {alumni.title}
+                            </p>
+                          )}
+                          {alumni.company && (
+                            <div className="flex items-center text-gray-500 text-sm mb-1">
+                              <Building className="w-4 h-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">{alumni.company}</span>
+                            </div>
+                          )}
+                          {alumni.location && (
+                            <div className="flex items-center text-gray-500 text-sm">
+                              <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">{alumni.location}</span>
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate mb-1">
-                          {alumni.name}
-                        </h3>
-                        {alumni.title && (
-                          <p className="text-gray-600 text-sm truncate mb-1">
-                            {alumni.title}
-                          </p>
-                        )}
-                        {alumni.company && (
-                          <div className="flex items-center text-gray-500 text-sm mb-1">
-                            <Building className="w-4 h-4 mr-1 flex-shrink-0" />
-                            <span className="truncate">{alumni.company}</span>
-                          </div>
-                        )}
-                        {alumni.location && (
-                          <div className="flex items-center text-gray-500 text-sm">
-                            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-                            <span className="truncate">{alumni.location}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
 
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-gray-600 text-sm">
-                        <GraduationCap className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{alumni.department} • Class of {alumni.graduationYear}</span>
-                      </div>
-                    </div>
-
-                    {/* Skills */}
-                    {alumni.skills && alumni.skills.length > 0 && (
-                      <div className="mb-4">
-                        <div className="flex flex-wrap gap-1">
-                          {alumni.skills.slice(0, 3).map((skill: string, index: number) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                          {alumni.skills.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                              +{alumni.skills.length - 3} more
-                            </span>
-                          )}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center text-gray-600 text-sm">
+                          <GraduationCap className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <span>{alumni.department} • Class of {alumni.graduationYear}</span>
                         </div>
                       </div>
-                    )}
 
-                    {/* Mentor Badge */}
-                    {alumni.isMentor && (
-                      <div className="flex items-center text-green-600 text-sm mb-4">
-                        <Heart className="w-4 h-4 mr-1" />
-                        <span className="font-medium">Available for Mentorship</span>
-                      </div>
-                    )}
+                      {/* Skills */}
+                      {alumni.skills && alumni.skills.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex flex-wrap gap-1">
+                            {alumni.skills.slice(0, 3).map((skill: string, index: number) => (
+                              <span
+                                key={index}
+                                className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {alumni.skills.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                +{alumni.skills.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="flex space-x-3">
+                      {/* Mentor Badge */}
+                      {alumni.isMentor && (
+                        <div className="flex items-center text-green-600 text-sm mb-4">
+                          <Heart className="w-4 h-4 mr-1" />
+                          <span className="font-medium">Available for Mentorship</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action buttons at the bottom */}
+                    <div className="flex space-x-3 mt-auto">
                       <Link to={`/alumni/${alumni._id}`} className="flex-1">
                         <Button variant="primary" size="sm" className="w-full">
                           View Profile
