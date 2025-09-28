@@ -19,6 +19,8 @@ interface RegisterData {
 
 export const authService = {
   async login(email: string, password: string): Promise<LoginResponse> {
+    console.log('Auth service login - API Base URL:', apiClient.defaults.baseURL);
+    console.log('Auth service login - Full URL:', `${apiClient.defaults.baseURL}/auth/login`);
     const response = await apiClient.post('/auth/login', { email, password });
     return response.data;
   },

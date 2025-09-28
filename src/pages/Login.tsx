@@ -10,11 +10,12 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 
 const loginSchema = z.object({
-  userType: z.enum(['alumni', 'student'], {
+  userType: z.enum(['alumni', 'student', 'admin'], {
     required_error: 'Please select your user type',
   }),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  isAdmin: z.boolean().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -37,11 +38,18 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      console.log('Attempting login with:', { email: data.email, userType: data.userType });
       await login(data.email, data.password);
-      const welcomeMessage = data.userType === 'alumni' ? 'Welcome back, Alumni!' : 'Welcome back, Student!';
+      const welcomeMessage = data.userType === 'alumni' ? 'Welcome back, Alumni!' : 
+                            data.userType === 'admin' ? 'Welcome back, Admin!' : 
+                            'Welcome back, Student!';
       toast.success(welcomeMessage);
-      navigate(from, { replace: true });
+      // Redirect admin users to admin dashboard
+      const redirectPath = data.userType === 'admin' ? '/admin-dashboard' : from;
+      navigate(redirectPath, { replace: true });
     } catch (error: any) {
+      console.error('Login error:', error);
+      console.error('Error response:', error.response);
       toast.error(error.response?.data?.message || 'Login failed');
     }
   };
@@ -75,6 +83,7 @@ const Login = () => {
                     <option value="">Select your status</option>
                     <option value="alumni">Alumni (Graduated)</option>
                     <option value="student">Current Student</option>
+                    <option value="admin">Admin</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
